@@ -356,13 +356,13 @@ const SUPABASE_URL='https://lnefvahjpfbtomupfgkd.supabase.co';
 const SUPABASE_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxuZWZ2YWhqcGZidG9tdXBmZ2tkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk2MzMyNTUsImV4cCI6MjA5NTIwOTI1NX0.Prb2IP_Znj3m0PumoW6vIbDUpdEBM7i4Z8gq17HQ6fQ';
 const FOOTBALL_API_KEY='173de29b7acd450282d6cb39b9627468';
 const GRUPO_ID='familia';
-const LOCK_HOURS=3; // horas antes de bloquear
+const LOCK_HOURS=1; // horas antes de bloquear
 const sb=supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
 
 // ── MATCH DATA (chronological order with kickoff times UTC) ──
 const PARTIDOS=[
-  {key:'m0', fecha:'11 Jun',kickoff:'2026-06-11T23:00:00',grupo:'A',home:{n:'México',f:'🇲🇽'},away:{n:'Sudáfrica',f:'🇿🇦'}},
-  {key:'m1', fecha:'11 Jun',kickoff:'2026-06-11T20:00:00',grupo:'A',home:{n:'Corea del Sur',f:'🇰🇷'},away:{n:'Rep. Checa',f:'🇨🇿'}},
+  {key:'m0', fecha:'11 Jun',kickoff:'2026-06-11T21:00:00',grupo:'A',home:{n:'México',f:'🇲🇽'},away:{n:'Sudáfrica',f:'🇿🇦'}},
+  {key:'m1', fecha:'12 Jun',kickoff:'2026-06-12T04:00:00',grupo:'A',home:{n:'Corea del Sur',f:'🇰🇷'},away:{n:'Rep. Checa',f:'🇨🇿'}},
   {key:'m2', fecha:'12 Jun',kickoff:'2026-06-12T20:00:00',grupo:'B',home:{n:'Canadá',f:'🇨🇦'},away:{n:'Bosnia-Herz.',f:'🇧🇦'}},
   {key:'m3', fecha:'12 Jun',kickoff:'2026-06-12T23:00:00',grupo:'D',home:{n:'USA',f:'🇺🇸'},away:{n:'Paraguay',f:'🇵🇾'}},
   {key:'m4', fecha:'13 Jun',kickoff:'2026-06-13T17:00:00',grupo:'B',home:{n:'Qatar',f:'🇶🇦'},away:{n:'Suiza',f:'🇨🇭'}},
