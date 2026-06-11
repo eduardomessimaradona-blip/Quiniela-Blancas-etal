@@ -663,7 +663,7 @@ async function savePreds(){
     if(hv!==null||av!==null||sel)
       rows.push({participante_id:currentPlayer.id,match_key:p.key,goles_local:hv,goles_visitante:av,resultado:sel});
   });
-  const bonusLocked2=new Date()>=new Date('2026-06-11T17:00:00');
+  const bonusLocked2=new Date()>=new Date('2026-06-12T17:00:00');
   const bonus=bonusLocked2?null:{participante_id:currentPlayer.id,
     campeon:document.getElementById('bon_campeon')?.value||null,
     subcamp:document.getElementById('bon_subcamp')?.value||null,
