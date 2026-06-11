@@ -623,6 +623,13 @@ async function renderPredMatches(){
   </div>`;
 
   startCountdowns();
+  // Post-render: bloquear botones 1X2 en partidos que ya tienen marcador cargado
+  PARTIDOS.forEach(p=>{
+    if(isLocked(p.kickoff)) return; // ya están disabled por HTML
+    const hEl=document.getElementById('ph_'+p.key);
+    const aEl=document.getElementById('pa_'+p.key);
+    if(hEl&&(hEl.value!==''||aEl.value!=='')) onScoreInput(p.key);
+  });
 }
 
 function onScoreInput(key){
@@ -631,12 +638,15 @@ function onScoreInput(key){
   if(!rs)return;
   const btns=rs.querySelectorAll('.rxbtn');
   if(h.value===''&&a.value===''){
-    // unlock buttons
+    // Ambos vacíos: desbloquear botones 1X2
     btns.forEach(b=>{b.disabled=false;});
+    delete rs.dataset.sel;
     return;
   }
-  // lock buttons and auto-select
-  const val=+h.value>+a.value?'1':+h.value<+a.value?'2':'X';
+  // Uno o ambos tienen valor: tratar vacío como 0 y auto-seleccionar
+  const hv = h.value!==''?+h.value:0;
+  const av = a.value!==''?+a.value:0;
+  const val=hv>av?'1':hv<av?'2':'X';
   btns.forEach(b=>{b.disabled=true;b.className='rxbtn';});
   const idx={'1':0,'X':1,'2':2}[val];
   btns[idx].classList.add(val==='1'?'sel-1':val==='X'?'sel-x':'sel-2');
@@ -658,8 +668,16 @@ async function savePreds(){
     if(isLocked(p.kickoff))return;
     const h=document.getElementById('ph_'+p.key),a=document.getElementById('pa_'+p.key);
     const rs=document.getElementById('rs_'+p.key);
-    const sel=rs?.dataset?.sel||null;
-    const hv=h&&h.value!==''?+h.value:null,av=a&&a.value!==''?+a.value:null;
+    // Si hay marcador en un lado, el otro vacío se trata como 0
+    const hRaw=h?h.value:'', aRaw=a?a.value:'';
+    const hasScore = hRaw!=='' || aRaw!=='';
+    const hv = hasScore ? (hRaw!==''?+hRaw:0) : null;
+    const av = hasScore ? (aRaw!==''?+aRaw:0) : null;
+    // Deducir sel del marcador si existe, si no usar el botón pulsado
+    let sel = rs?.dataset?.sel||null;
+    if(hasScore){
+      sel = hv>av?'1':hv<av?'2':'X';
+    }
     if(hv!==null||av!==null||sel)
       rows.push({participante_id:currentPlayer.id,match_key:p.key,goles_local:hv,goles_visitante:av,resultado:sel});
   });
