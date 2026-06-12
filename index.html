@@ -456,13 +456,29 @@ const ALL_TEAMS=Object.values(EQUIPOS_POR_GRUPO).flat();
 let currentPlayer=null, results={}, clasifReal={}, bonusReal={};
 let ADMIN_PIN='2026', pinEntry='';
 let countdownTimers=[];
+let serverTimeOffset=0; // diferencia ms entre servidor y dispositivo
+
+// ── SERVER TIME ──────────────────────────────────────────────
+async function syncServerTime(){
+  try{
+    const t0=Date.now();
+    const resp=await fetch(SUPABASE_URL+'/rest/v1/?apikey='+SUPABASE_KEY);
+    const t1=Date.now();
+    const dateHeader=resp.headers.get('date');
+    if(dateHeader){
+      const serverMs=new Date(dateHeader).getTime();
+      serverTimeOffset=serverMs-Math.round((t0+t1)/2);
+    }
+  }catch(e){ serverTimeOffset=0; }
+}
+function nowServer(){ return new Date(Date.now()+serverTimeOffset); }
 
 // ── HELPERS ───────────────────────────────────────────────────
 function isLocked(kickoff){
-  return new Date()-new Date(kickoff) > -LOCK_HOURS*3600*1000;
+  return nowServer()-new Date(kickoff) > -LOCK_HOURS*3600*1000;
 }
 function minsUntil(kickoff){
-  return (new Date(kickoff)-new Date())/60000;
+  return (new Date(kickoff)-nowServer())/60000;
 }
 function teamOptsHtml(sel=''){
   return '<option value="">— Sin definir —</option>'+
@@ -511,7 +527,9 @@ function loginSuccess(player){
   document.getElementById('loginScreen').style.display='none';
   document.getElementById('mainApp').style.display='block';
   document.getElementById('userNameBadge').textContent=player.nombre;
-  loadResults().then(()=>{renderPredMatches();startCountdowns();});
+  syncServerTime().then(()=>{
+    loadResults().then(()=>{renderPredMatches();startCountdowns();});
+  });
 }
 function logout(){
   currentPlayer=null;countdownTimers.forEach(clearInterval);countdownTimers=[];
