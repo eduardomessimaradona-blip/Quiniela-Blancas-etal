@@ -216,7 +216,7 @@ header p{font-size:11px;letter-spacing:2px;color:var(--muted);text-transform:upp
       <div class="card-head">📋 Puntuación</div>
       <div class="pts-row"><span>⚽ Marcador exacto</span><span class="pts-val">3 pts</span></div>
       <div class="pts-row"><span>✅ Ganador / empate (1·X·2)</span><span class="pts-val">1 pt</span></div>
-      <div class="pts-row"><span>🏅 Orden por Clasificados por grupo </span><span class="pts-val">1 pt c/u</span></div>
+      <div class="pts-row"><span>🏅 Clasificado por grupo (×2)</span><span class="pts-val">1 pt c/u</span></div>
       <div class="pts-row"><span>🏆 Campeón · 🥈 Subcampeón</span><span class="pts-val">+5 · +2</span></div>
       <div class="pts-row"><span>👟 Goleador · ⭐ Mejor jugador</span><span class="pts-val">+3 · +2</span></div>
     </div>
@@ -388,7 +388,7 @@ header p{font-size:11px;letter-spacing:2px;color:var(--muted);text-transform:upp
 const SUPABASE_URL='https://lnefvahjpfbtomupfgkd.supabase.co';
 const SUPABASE_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxuZWZ2YWhqcGZidG9tdXBmZ2tkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk2MzMyNTUsImV4cCI6MjA5NTIwOTI1NX0.Prb2IP_Znj3m0PumoW6vIbDUpdEBM7i4Z8gq17HQ6fQ';
 const FOOTBALL_API_KEY='173de29b7acd450282d6cb39b9627468';
-const GRUPO_ID='familia';
+const GRUPO_ID='Amigos';
 const LOCK_HOURS= 3 ; // horas antes de bloquear fase de grupos
 const LOCK_HOURS_KO= 1 ; // horas antes de bloquear fase eliminatoria
 const sb=supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
@@ -463,8 +463,8 @@ const PARTIDOS=[
   {key:'m65',fecha:'26 Jun',kickoff:'2026-06-27T03:00:00Z',grupo:'G',home:{n:'Nueva Zelanda',f:'🇳🇿'},away:{n:'Bélgica',f:'🇧🇪'}},
   {key:'m66',fecha:'27 Jun',kickoff:'2026-06-27T21:00:00Z',grupo:'L',home:{n:'Panamá',f:'🇵🇦'},away:{n:'Inglaterra',f:'\uD83C\uDFF4\uDB40\uDC67\uDB40\uDC62\uDB40\uDC65\uDB40\uDC6E\uDB40\uDC67\uDB40\uDC7F'}},
   {key:'m67',fecha:'27 Jun',kickoff:'2026-06-27T21:00:00Z',grupo:'L',home:{n:'Croacia',f:'🇭🇷'},away:{n:'Ghana',f:'🇬🇭'}},
-  {key:'m68',fecha:'27 Jun',kickoff:'2026-06-26T23:30:00Z',grupo:'K',home:{n:'Colombia',f:'🇨🇴'},away:{n:'Portugal',f:'🇵🇹'}},
-  {key:'m69',fecha:'27 Jun',kickoff:'2026-06-26T23:30:00Z',grupo:'K',home:{n:'DR Congo',f:'🇨🇩'},away:{n:'Uzbekistán',f:'🇺🇿'}},
+  {key:'m68',fecha:'27 Jun',kickoff:'2026-06-28T23:30:00Z',grupo:'K',home:{n:'Colombia',f:'🇨🇴'},away:{n:'Portugal',f:'🇵🇹'}},
+  {key:'m69',fecha:'27 Jun',kickoff:'2026-06-28T23:30:00Z',grupo:'K',home:{n:'DR Congo',f:'🇨🇩'},away:{n:'Uzbekistán',f:'🇺🇿'}},
   {key:'m70',fecha:'27 Jun',kickoff:'2026-06-28T02:00:00Z',grupo:'J',home:{n:'Argelia',f:'🇩🇿'},away:{n:'Austria',f:'🇦🇹'}},
   {key:'m71',fecha:'27 Jun',kickoff:'2026-06-28T02:00:00Z',grupo:'J',home:{n:'Jordania',f:'🇯🇴'},away:{n:'Argentina',f:'🇦🇷'}},
 ];
@@ -773,8 +773,9 @@ async function renderOthers(){
   document.getElementById('othersGrid').innerHTML='<div class="loading"><span class="spinner"></span>Cargando...</div>';
   const {data:players}=await sb.from('participantes').select('*').eq('grupo',GRUPO_ID).order('created_at');
   const playerIds2=(players||[]).map(p=>p.id);
-  const {data:allPreds}=playerIds2.length?await sb.from('pronosticos').select('*').in('participante_id',playerIds2):{data:[]};
-  const predMap={};(allPreds||[]).forEach(p=>{if(!predMap[p.participante_id])predMap[p.participante_id]={};predMap[p.participante_id][p.match_key]={h:p.goles_local,a:p.goles_visitante,r:p.resultado};});
+  const allPredsArr2=await Promise.all(playerIds2.map(id=>sb.from('pronosticos').select('*').eq('participante_id',id).then(r=>r.data||[])));
+  const allPreds2=allPredsArr2.flat();
+  const predMap={};(allPreds2||[]).forEach(p=>{if(!predMap[p.participante_id])predMap[p.participante_id]={};predMap[p.participante_id][p.match_key]={h:p.goles_local,a:p.goles_visitante,r:p.resultado};});
 
   const lockedKeys=new Set(PARTIDOS.filter(p=>isLocked(p.kickoff)).map(p=>p.key));
   document.getElementById('othersGrid').innerHTML=(players||[]).map(p=>{
@@ -1285,11 +1286,16 @@ async function renderLB(){
   results={};(resData||[]).forEach(r=>results[r.match_key]=[+r.goles_local,+r.goles_visitante]);
   await loadKOData();
   const playerIds=(players||[]).map(p=>p.id);
-  const [{data:allPreds},{data:allBonus},{data:allKOPreds}]=await Promise.all([
-    playerIds.length?sb.from('pronosticos').select('*').in('participante_id',playerIds):Promise.resolve({data:[]}),
-    playerIds.length?sb.from('pronosticos_bonus').select('*').in('participante_id',playerIds):Promise.resolve({data:[]}),
-    (playerIds.length&&koPartidos.length)?sb.from('pronosticos_eliminatoria').select('*').in('participante_id',playerIds):Promise.resolve({data:[]})
+
+  // Fetch individual per player to bypass Supabase 1000 row limit
+  const [allPredsArr, allBonusArr, allKOPredsArr] = await Promise.all([
+    Promise.all(playerIds.map(id=>sb.from('pronosticos').select('*').eq('participante_id',id).then(r=>r.data||[]))),
+    Promise.all(playerIds.map(id=>sb.from('pronosticos_bonus').select('*').eq('participante_id',id).maybeSingle().then(r=>r.data?[r.data]:[]))),
+    koPartidos.length?Promise.all(playerIds.map(id=>sb.from('pronosticos_eliminatoria').select('*').eq('participante_id',id).then(r=>r.data||[]))):Promise.resolve(playerIds.map(()=>[]))
   ]);
+  const allPreds=allPredsArr.flat();
+  const allBonus=allBonusArr.flat();
+  const allKOPreds=allKOPredsArr.flat();
   const predMap={};(allPreds||[]).forEach(p=>{if(!predMap[p.participante_id])predMap[p.participante_id]={};predMap[p.participante_id][p.match_key]={h:p.goles_local,a:p.goles_visitante,r:p.resultado};});
   const bonusMap={};(allBonus||[]).forEach(b=>bonusMap[b.participante_id]=b);
   const koPredMap={};(allKOPreds||[]).forEach(p=>{if(!koPredMap[p.participante_id])koPredMap[p.participante_id]={};koPredMap[p.participante_id][p.match_key]={h:p.goles_local,a:p.goles_visitante,r:p.resultado};});
