@@ -427,7 +427,7 @@ function toggleLBDetail(id){
 const SUPABASE_URL='https://lnefvahjpfbtomupfgkd.supabase.co';
 const SUPABASE_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxuZWZ2YWhqcGZidG9tdXBmZ2tkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk2MzMyNTUsImV4cCI6MjA5NTIwOTI1NX0.Prb2IP_Znj3m0PumoW6vIbDUpdEBM7i4Z8gq17HQ6fQ';
 const FOOTBALL_API_KEY='173de29b7acd450282d6cb39b9627468';
-const GRUPO_ID='familia';
+const GRUPO_ID='FOENER';
 const LOCK_HOURS= 3 ; // horas antes de bloquear fase de grupos
 const LOCK_HOURS_KO= 1 ; // horas antes de bloquear fase eliminatoria
 const sb=supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
@@ -1685,7 +1685,7 @@ async function renderKnockout(){
             oninput="onKOScoreInput('${p.key}')">
           <div class="match-center">
             <div style="font-size:9px;color:var(--muted);letter-spacing:.5px">VS</div>
-            <div class="result-sel" id="kors_${p.key}">
+            <div class="result-sel" id="kors_${p.key}" data-sel="${pr}">
               <button class="rxbtn${pr==='1'?' sel-1':''}" onclick="setKOSel('${p.key}','1',this)" ${dis}>1</button>
               <button class="rxbtn${pr==='X'?' sel-x':''}" onclick="setKOSel('${p.key}','X',this)" ${dis}>X</button>
               <button class="rxbtn${pr==='2'?' sel-2':''}" onclick="setKOSel('${p.key}','2',this)" ${dis}>2</button>
@@ -1740,10 +1740,16 @@ function onKOScoreInput(key){
     rs.dataset.sel=val;
   } else {
     // Empate en marcador: marcar X automáticamente pero dejar 1 y 2 activos
-    // para que el usuario elija quién gana (prórroga/penaltis)
+    const prevSel=rs.dataset.sel;
     btns.forEach(b=>{b.disabled=false;b.className='rxbtn';});
-    btns[1].classList.add('sel-x'); // X = centro
-    rs.dataset.sel='X';
+    if(prevSel==='1'){
+      btns[0].classList.add('sel-1');
+    } else if(prevSel==='2'){
+      btns[2].classList.add('sel-2');
+    } else {
+      btns[1].classList.add('sel-x');
+      rs.dataset.sel='X';
+    }
   }
 }
 
@@ -1768,8 +1774,9 @@ async function saveKnockoutPreds(){
     // Si solo uno está relleno, inferir el otro como 0
     if(hv!==null&&av===null) av=0;
     if(av!==null&&hv===null) hv=0;
+    // Solo guardar si hay algo que guardar
     if(hv!==null||av!==null||sel)
-      rows.push({participante_id:currentPlayer.id,match_key:p.key,goles_local:hv,goles_visitante:av,resultado:sel});
+      rows.push({participante_id:currentPlayer.id,match_key:p.key,goles_local:hv,goles_visitante:av,resultado:sel||null});
   });
   if(!rows.length){showMsg('saveKOMsg','⚠️ No hay pronósticos nuevos que guardar.',false);document.getElementById('btnSaveKO').textContent='💾 Guardar pronósticos eliminatoria';return;}
   const {error}=await sb.from('pronosticos_eliminatoria').upsert(rows,{onConflict:'participante_id,match_key'});
